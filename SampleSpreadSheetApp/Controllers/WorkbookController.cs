@@ -1,10 +1,14 @@
-﻿using Microsoft.AspNetCore.Hosting.Server;
+﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using SampleSpreadSheetApp.model;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 
 namespace SampleSpreadSheetApp.Controllers
@@ -124,6 +128,77 @@ namespace SampleSpreadSheetApp.Controllers
             var folderName = Path.Combine("assets", "files");
             var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
             var fullPath = Path.Combine(pathToSave, "Child2WorkbookData.xlsx");
+
+            HttpContext.Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            FileContentResult result = new FileContentResult(System.IO.File.ReadAllBytes(fullPath),
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            {
+                FileDownloadName = "otherfile"
+            };
+            return result;
+
+            //return Ok(reader);
+        }
+
+        [HttpPost("InsertDealerDetails")]
+        public IActionResult InsertDealerDetails(string name, string sheetInfo)
+        {
+            dataLayer.InsertDealerDetails(name, sheetInfo);
+            return Ok();
+        }
+
+        [HttpPost("getParentFile")]
+        public IActionResult getParentFile(string data)
+        {
+
+            try
+            {
+
+                DataTable dt = (DataTable)JsonConvert.DeserializeObject(data, (typeof(DataTable)));
+                XLWorkbook wb = new XLWorkbook();
+                // wb.Worksheets. = false;
+                var worksheet = wb.Worksheets.Add(dt, "Sheet1");
+                worksheet.Cell("B2").GetValue<string>();
+
+
+                var folderName = Path.Combine("assets", "files");
+                var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+                var fullPath = Path.Combine(pathToSave, "Parent.xlsx");
+                wb.SaveAs(fullPath);
+
+                //var folderName = Path.Combine("assets", "files");
+                //var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+
+                //if (file.Length > 0)
+                //{
+                //    var fileName = ContentDispositionHeaderValue.Parse(file.ContentDisposition).FileName.ToString();
+                //    var fullPath = Path.Combine(pathToSave, fileName);
+                //    var dbPath = Path.Combine(folderName, fileName);
+                //    using (var stream = new FileStream(fullPath, FileMode.Create))
+                //    {
+                //        file.CopyTo(stream);
+                //    }
+                //}
+                //else
+                //{
+                //    return BadRequest();
+                //}
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return Ok();
+
+
+            
+        }
+        [HttpGet("getParentFile"), DisableRequestSizeLimit]
+        public IActionResult getParentFile()
+        {
+            var folderName = Path.Combine("assets", "files");
+            var pathToSave = Path.Combine(Directory.GetCurrentDirectory(), folderName);
+            var fullPath = Path.Combine(pathToSave, "Parent.xlsx");
 
             HttpContext.Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
             FileContentResult result = new FileContentResult(System.IO.File.ReadAllBytes(fullPath),
